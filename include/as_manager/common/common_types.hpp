@@ -5,7 +5,7 @@
 #include <concepts>
 
 #if !STANDALONE
-#include <mmr_base/configuration.hpp>
+#include <common_msgs/configuration.hpp>
 #endif
 
 namespace hal {

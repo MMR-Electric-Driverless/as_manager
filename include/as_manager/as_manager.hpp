@@ -17,12 +17,12 @@
 
 #include <can_msgs/msg/frame.hpp>
 #include <mmr_edf/mmr_edf.hpp>
-#include <mmr_base/msg/ecu_status.hpp>
-#include <mmr_base/msg/res_status.hpp>
-#include <mmr_base/msg/actuator_status.hpp>
-#include <mmr_base/msg/cmd_motor.hpp>
-#include <mmr_base/msg/cmd_ecu.hpp>
-#include <mmr_base/configuration.hpp>
+#include <common_msgs/msg/ecu_status.hpp>
+#include <common_msgs/msg/res_status.hpp>
+#include <common_msgs/msg/actuator_status.hpp>
+#include <common_msgs/msg/cmd_motor.hpp>
+#include <common_msgs/msg/cmd_ecu.hpp>
+#include <common_msgs/configuration.hpp>
 
 constexpr unsigned updatableSignalsNumber = 5;
 using namespace std::chrono_literals;
@@ -40,16 +40,16 @@ struct ROSInputState {
 
 struct ROSPublishers {
   rclcpp::Publisher<std_msgs::msg::Int8>::SharedPtr asStatePublisher;
-  rclcpp::Publisher<mmr_base::msg::CmdMotor>::SharedPtr brakePublisher;
-  rclcpp::Publisher<mmr_base::msg::CmdEcu>::SharedPtr gearPublisher;
-  rclcpp::Publisher<mmr_base::msg::CmdMotor>::SharedPtr clutchPublisher;
-  rclcpp::Publisher<mmr_base::msg::CmdMotor>::SharedPtr steerPublisher;
+  rclcpp::Publisher<common_msgs::msg::CmdMotor>::SharedPtr brakePublisher;
+  rclcpp::Publisher<common_msgs::msg::CmdEcu>::SharedPtr gearPublisher;
+  rclcpp::Publisher<common_msgs::msg::CmdMotor>::SharedPtr clutchPublisher;
+  rclcpp::Publisher<common_msgs::msg::CmdMotor>::SharedPtr steerPublisher;
 };
 
 struct ROSSubscribers {
-  rclcpp::Subscription<mmr_base::msg::EcuStatus>::SharedPtr ecuStatusSubscription;
-  rclcpp::Subscription<mmr_base::msg::ResStatus>::SharedPtr resStatusSubscription;
-  rclcpp::Subscription<mmr_base::msg::ActuatorStatus>::SharedPtr maxonMotorsSubscription;
+  rclcpp::Subscription<common_msgs::msg::EcuStatus>::SharedPtr ecuStatusSubscription;
+  rclcpp::Subscription<common_msgs::msg::ResStatus>::SharedPtr resStatusSubscription;
+  rclcpp::Subscription<common_msgs::msg::ActuatorStatus>::SharedPtr maxonMotorsSubscription;
   rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr missionSelectedSubscription;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr stopMessageSubscription;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr orinOnSubscription;
@@ -93,7 +93,7 @@ class AsManagerNode : public EDFNode {
     );
   }
 
-  void ecuStatusCb(const mmr_base::msg::EcuStatus::SharedPtr msg) {
+  void ecuStatusCb(const common_msgs::msg::EcuStatus::SharedPtr msg) {
     inputState.engineRpm = msg->nmot;
     inputState.brakePressureRear = msg->p_brake_rear;
     inputState.brakePressureFront = msg->p_brake_front;
@@ -102,12 +102,12 @@ class AsManagerNode : public EDFNode {
     logInputState();
   }
 
-  void resStatusCb(const mmr_base::msg::ResStatus::SharedPtr msg) {
+  void resStatusCb(const common_msgs::msg::ResStatus::SharedPtr msg) {
     inputState.resState = hal::utils::resComposeBv(msg->go_signal, msg->bag, msg->emergency);
     logInputState();
   }
   
-  void maxonMotorsCb(const mmr_base::msg::ActuatorStatus::SharedPtr msg) {
+  void maxonMotorsCb(const common_msgs::msg::ActuatorStatus::SharedPtr msg) {
     inputState.canOpenOn=true;
     inputState.maxonMotorsState = hal::utils::motorsComposeBv(msg->clutch_status, msg->steer_status, msg->brake_status);
     logInputState();
@@ -159,30 +159,30 @@ class AsManagerNode : public EDFNode {
   }
 
   static inline void sendBrakePercentage(float percentage){
-    auto msg = mmr_base::msg::CmdMotor();
+    auto msg = common_msgs::msg::CmdMotor();
     msg.brake_torque = percentage;
     outputPublishers.brakePublisher->publish(msg);
   }
 
   static inline void enableMotors(bool brake, bool clutch){
-      auto msgBrake=mmr_base::msg::CmdMotor();
+      auto msgBrake=common_msgs::msg::CmdMotor();
       msgBrake.enable=brake;
       outputPublishers.brakePublisher->publish(msgBrake);
 
-      auto msgClutch=mmr_base::msg::CmdMotor();
+      auto msgClutch=common_msgs::msg::CmdMotor();
       msgClutch.enable=clutch;
       outputPublishers.clutchPublisher->publish(msgClutch);
     
   }
 
   static inline void sendFirstGear(){
-    auto msg = mmr_base::msg::CmdEcu();
+    auto msg = common_msgs::msg::CmdEcu();
     msg.gear_target = 1;
     outputPublishers.gearPublisher->publish(msg);
   }
 
   static inline void sendClutchAction(bool doDisengage) {
-    auto msg = mmr_base::msg::CmdMotor();
+    auto msg = common_msgs::msg::CmdMotor();
     msg.disengaged = doDisengage;
     outputPublishers.clutchPublisher->publish(msg);
   }
