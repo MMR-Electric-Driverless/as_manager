@@ -15,5 +15,5 @@ namespace timing {
 }
 
 #else
-#include <common_msgs/configuration.hpp>
+#include <mmr_base/configuration.hpp>
 #endif
